@@ -10,9 +10,11 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
-import java.util.UUID;
+
 
 @Entity
 @Table
@@ -44,14 +46,23 @@ public class PersonEntity extends BaseClass implements UserDetails {
     @Transient
     private String confirmPassword;
 
+    // this token is to handle reset password
+    private String resetToken;
+
+    // monitor token creation time and expiration time
+    private LocalDateTime resetTokenCreationTime;
+
     private boolean enabled = false;
 
     @Enumerated(EnumType.STRING)
     private Position position;
 
+    @ManyToOne
+    @JoinColumn(name = "created_by_admin_id") // Foreign key to link Employee to Admin
+    private PersonEntity createdByAdmin;
+
     @Enumerated(EnumType.STRING)
     private Role role;
-
 
 
     @OneToMany(mappedBy = "person", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -59,6 +70,10 @@ public class PersonEntity extends BaseClass implements UserDetails {
 
     @OneToMany(mappedBy = "persons",  cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ConfirmationTokenModel> confirmationTokens;
+
+    @ManyToOne
+    @JoinColumn(name = "location_id")  // Foreign key column in Employee table
+    private Location location;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

@@ -25,7 +25,6 @@ import static org.springframework.security.web.util.matcher.AntPathRequestMatche
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 @RequiredArgsConstructor
 public class SecurityConfig {
-
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final AuthenticationProvider authenticationProvider;
@@ -49,15 +48,11 @@ public class SecurityConfig {
                                         antMatcher(HttpMethod.GET,"/swagger-ui/**"), //3
                                         antMatcher(HttpMethod.GET,"/swagger-resources/**"), //4
                                         antMatcher(HttpMethod.GET,"/swagger-ui.html") //5
-                )
+                                )
                                 .permitAll()
                                 .anyRequest()
                                 .authenticated()
 
-                )
-                .oauth2Login(oauth2 -> oauth2
-                        .defaultSuccessUrl("/loginSuccess")
-                        .failureUrl("/loginfailure")
                 )
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint(jwtAuthenticationEntryPoint))
@@ -87,3 +82,4 @@ public class SecurityConfig {
     }
 
 }
+

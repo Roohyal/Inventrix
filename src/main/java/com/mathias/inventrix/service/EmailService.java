@@ -5,4 +5,6 @@ import jakarta.mail.MessagingException;
 
 public interface EmailService {
     void sendEmailAlert(EmailDetails emailDetails, String templateName) throws MessagingException;
+
+    void sendEmployeeAlert(EmailDetails emailDetails, String templateName) throws MessagingException;
 }

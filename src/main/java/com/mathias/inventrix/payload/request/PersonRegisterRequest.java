@@ -33,7 +33,6 @@ public class PersonRegisterRequest {
     @NotBlank(message = "Company name cannot be blank")
     private String companyName;
 
-
     private Role role;
 
     private Position position;

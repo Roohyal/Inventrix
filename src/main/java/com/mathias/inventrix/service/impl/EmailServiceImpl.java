@@ -35,7 +35,7 @@ public class EmailServiceImpl implements EmailService {
 
         Context context = new Context();
         Map<String, Object> variables = Map.of(
-                "name", emailDetails.getFullname(),
+                "name", emailDetails.getFullName(),
                 "company", emailDetails.getCompanyId(),
                 "link", emailDetails.getLink()
 
@@ -51,5 +51,32 @@ public class EmailServiceImpl implements EmailService {
 
         mailSender.send(mimeMessage);
         log.info("Sending email: to {}", emailDetails.getRecipient());
+    }
+
+    @Override
+    public void sendEmployeeAlert(EmailDetails emailDetails, String templateName) throws MessagingException {
+        MimeMessage mimeMessage = mailSender.createMimeMessage();
+        MimeMessageHelper mimeMessageHelper = new MimeMessageHelper(mimeMessage, MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED, StandardCharsets.UTF_8.name());
+
+        Context context = new Context();
+        Map<String, Object> variables = Map.of(
+                "name", emailDetails.getFullName(),
+                "company", emailDetails.getCompanyName(),
+                "password", emailDetails.getPassword(),
+                "link", emailDetails.getLink()
+
+        );
+        context.setVariables(variables);
+
+        mimeMessageHelper.setFrom(senderEmail);
+        mimeMessageHelper.setTo(emailDetails.getRecipient());
+        mimeMessageHelper.setSubject(emailDetails.getSubject());
+
+        String html = templateEngine.process(templateName, context);
+        mimeMessageHelper.setText(html, true);
+
+        mailSender.send(mimeMessage);
+        log.info("Sending email: to {}", emailDetails.getRecipient());
+
     }
 }

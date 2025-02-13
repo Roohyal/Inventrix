@@ -12,13 +12,15 @@ import java.util.UUID;
 @NoArgsConstructor
 @Builder
 public class EmailDetails {
-     private String fullname;
+     private String fullName;
 
      private String companyName;
 
      private String companyId;
 
      private String recipient;
+
+     private  String password;
 
      private String messageBody;
 

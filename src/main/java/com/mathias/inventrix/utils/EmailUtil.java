@@ -1,8 +1,25 @@
 package com.mathias.inventrix.utils;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+@Component
 public class EmailUtil {
 
-    public static String getVerificationUrl( String token){
-        return  "http://localhost:8080/api/auth/confirm?token=" + token ;
+
+    @Value("${app.url.verification}")
+    private  String verificationUrl;
+
+
+    @Value("${app.url.reset-password}")
+    private  String resetUrl;
+
+    public  String getVerificationUrl( String token){
+        return verificationUrl + token;
+    }
+
+
+    public  String getResetUrl(String token){
+        return resetUrl + token;
     }
 }

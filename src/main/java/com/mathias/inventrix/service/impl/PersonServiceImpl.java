@@ -4,6 +4,7 @@ package com.mathias.inventrix.service.impl;
 import com.mathias.inventrix.Infrastructure.config.JwtService;
 import com.mathias.inventrix.domain.entity.ConfirmationTokenModel;
 import com.mathias.inventrix.domain.entity.JToken;
+import com.mathias.inventrix.domain.entity.Location;
 import com.mathias.inventrix.domain.entity.PersonEntity;
 import com.mathias.inventrix.domain.enums.Position;
 import com.mathias.inventrix.domain.enums.Role;
@@ -11,14 +12,14 @@ import com.mathias.inventrix.domain.enums.TokenType;
 import com.mathias.inventrix.exceptions.AlreadyExistException;
 import com.mathias.inventrix.exceptions.NotEnabledException;
 import com.mathias.inventrix.exceptions.NotFoundException;
-import com.mathias.inventrix.payload.request.EmailDetails;
-import com.mathias.inventrix.payload.request.LoginRequest;
-import com.mathias.inventrix.payload.request.PersonRegisterRequest;
+import com.mathias.inventrix.payload.request.*;
+import com.mathias.inventrix.payload.response.EmployeeResponse;
 import com.mathias.inventrix.payload.response.LoginInfo;
 import com.mathias.inventrix.payload.response.LoginResponse;
 import com.mathias.inventrix.payload.response.PersonRegisterResponse;
 import com.mathias.inventrix.repository.ConfirmationTokenRepository;
 import com.mathias.inventrix.repository.JTokenRepository;
+import com.mathias.inventrix.repository.LocationRepository;
 import com.mathias.inventrix.repository.PersonRepository;
 import com.mathias.inventrix.service.EmailService;
 import com.mathias.inventrix.service.PersonService;
@@ -29,9 +30,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.regex.Matcher;
@@ -50,6 +54,8 @@ public class PersonServiceImpl implements PersonService {
     private final AuthenticationManager authenticationManager;
     private final EmailService emailService;
     private final AccountUtil accountUtil;
+    private final EmailUtil emailUtil;
+    private final LocationRepository locationRepository;
 
     @Override
     public PersonRegisterResponse registerPerson(PersonRegisterRequest registerRequest) throws MessagingException {
@@ -89,10 +95,10 @@ public class PersonServiceImpl implements PersonService {
         ConfirmationTokenModel confirmationTokenModel = new ConfirmationTokenModel(savedPerson);
         confirmationTokenRepository.save(confirmationTokenModel);
 
-        String confirmationUrl = EmailUtil.getVerificationUrl(confirmationTokenModel.getToken());
+        String confirmationUrl = emailUtil.getVerificationUrl(confirmationTokenModel.getToken());
 
         EmailDetails emailDetails = EmailDetails.builder()
-                .fullname(savedPerson.getFullName())
+                .fullName(savedPerson.getFullName())
                 .companyName(savedPerson.getCompanyName())
                 .companyId(savedPerson.getCompanyId())
                 .recipient(savedPerson.getEmail())
@@ -160,4 +166,129 @@ public class PersonServiceImpl implements PersonService {
                 .build();
     }
 
+    @Override
+    public String forgotPassword(ForgetPasswordRequestDto forgetpassword) throws MessagingException {
+        PersonEntity person = personRepository.findByEmail(forgetpassword.getEmail())
+                .orElseThrow(()-> new NotFoundException("User is not found"));
+
+        String token = UUID.randomUUID().toString();
+        person.setResetToken(token);
+        person.setResetTokenCreationTime(LocalDateTime.now());
+        personRepository.save(person);
+
+        String resetUrl = emailUtil.getResetUrl(token);
+
+        EmailDetails emailDetails = EmailDetails.builder()
+                .fullName(person.getFullName())
+                .recipient(person.getEmail())
+                .subject("INVENTRIX!!! RESET YOUR PASSWORD ")
+                .link(resetUrl)
+                .build();
+
+        emailService.sendEmailAlert(emailDetails,"forgot_password");
+
+
+        return "A reset password link has been sent to your account email address";
+    }
+
+    @Override
+    public String resetPassword(ResetPasswordRequestDto resetpassword) {
+
+        PersonEntity person =  personRepository.findByResetToken(resetpassword.getToken()).orElseThrow(()-> new NotFoundException("User is not found"));
+
+        if (Duration.between(person.getResetTokenCreationTime(), LocalDateTime.now()).toMinutes() > 5) {
+            person.setResetToken(null);
+            personRepository.save(person);
+            throw new NotEnabledException("Token has expired!");
+        }
+        if(!resetpassword.getPassword().equals(resetpassword.getConfirmPassword())){
+            throw new NotEnabledException("Confirmation Password does not match!");
+        }
+
+        person.setPassword(passwordEncoder.encode(resetpassword.getPassword()));
+
+        // set the reset token to null
+        person.setResetToken(null);
+
+        personRepository.save(person);
+
+        return "Password Reset is Successful";
+    }
+
+    @Override
+    public EmployeeResponse addEmployee(String email, EmployeeRequest employeeRequest) throws MessagingException {
+        personRepository.findByEmail(email).orElseThrow(()-> new NotFoundException("User is not found"));
+
+        // Get the logged-in Admin from the security context
+        PersonEntity admin = personRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Admin not found"));
+
+        // Ensure only Admins can create Employees
+        if (admin.getRole() != Role.ADMIN) {
+            throw new RuntimeException("Only Admins can create Employees");
+        }
+
+        // Validate email format
+        String emailRegex = "^(.+)@(.+)$";
+        Pattern pattern = Pattern.compile(emailRegex);
+        Matcher matcher = pattern.matcher(employeeRequest.getEmail());
+
+        if (!matcher.matches()) {
+            throw new MessagingException("Invalid email domain");
+        }
+        String[] emailParts = employeeRequest.getEmail().split("\\.");
+        if (emailParts.length < 2 || emailParts[emailParts.length - 1].length() < 2){
+            throw new MessagingException("Invalid email domain");
+        }
+
+        // Find the location (mandatory for Employees)
+        Location location = locationRepository.findById(employeeRequest.getLocationId())
+                .orElseThrow(() -> new RuntimeException("Location not found"));
+
+        // Generate and encode password
+        String rawPassword = generateRandomPassword();
+        String encodedPassword = passwordEncoder.encode(rawPassword);
+
+        // Create the new Employee
+        PersonEntity employee = PersonEntity.builder()
+                .fullName(employeeRequest.getFullName())
+                .email(employeeRequest.getEmail())
+                .location(location)
+                .password(encodedPassword)
+                .role(Role.USER)
+                .phoneNumber(employeeRequest.getPhoneNumber())
+                .companyName(admin.getCompanyName())
+                .companyId(admin.getCompanyId())
+                .position(employeeRequest.getPosition())
+                .createdByAdmin(admin)
+                .build();
+
+        PersonEntity savedEmployee = personRepository.save(employee);
+
+        ConfirmationTokenModel confirmationTokenModel = new ConfirmationTokenModel(savedEmployee);
+        confirmationTokenRepository.save(confirmationTokenModel);
+
+        String confirmationUrl = emailUtil.getVerificationUrl(confirmationTokenModel.getToken());
+
+        EmailDetails emailDetails = EmailDetails.builder()
+                .fullName(savedEmployee.getFullName())
+                .companyName(savedEmployee.getCompanyName())
+                .recipient(savedEmployee.getEmail())
+                .password(savedEmployee.getPassword())
+                .subject("INVENTRIX ACCOUNT CREATED SUCCESSFULLY")
+                .link(confirmationUrl)
+                .build();
+
+        emailService.sendEmailAlert(emailDetails,"email_verification");
+
+        return EmployeeResponse.builder()
+                .responseCode("005")
+                .responseMessage("Your Employee's account has been created successfully, they should kindly check their email")
+                .build();
+    }
+
+    // Generate an 8-character random password
+    private String generateRandomPassword() {
+        return UUID.randomUUID().toString().substring(0, 8);
+    }
 }

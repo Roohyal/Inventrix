@@ -1,7 +1,6 @@
 package com.mathias.inventrix.Infrastructure.controller;
 
-import com.mathias.inventrix.payload.request.LoginRequest;
-import com.mathias.inventrix.payload.request.PersonRegisterRequest;
+import com.mathias.inventrix.payload.request.*;
 import com.mathias.inventrix.payload.response.LoginResponse;
 import com.mathias.inventrix.payload.response.PersonRegisterResponse;
 import com.mathias.inventrix.service.PersonService;
@@ -37,5 +36,22 @@ public class AuthController {
          return ResponseEntity.ok(personService.loginUser(loginRequest));
 
      }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@RequestBody ForgetPasswordRequestDto requestDto) throws MessagingException {
+
+        String response = personService.forgotPassword(requestDto);
+
+        return ResponseEntity.ok(response);
+
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequestDto requestDto) {
+        String response = personService.resetPassword(requestDto);
+
+        return ResponseEntity.ok(response);
+    }
+
 
 }
