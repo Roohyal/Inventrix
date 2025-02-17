@@ -1,5 +1,6 @@
 package com.mathias.inventrix.Infrastructure.controller;
 
+import com.mathias.inventrix.payload.request.EditUserRequestDto;
 import com.mathias.inventrix.payload.request.EmployeeRequest;
 import com.mathias.inventrix.payload.request.LocationRequest;
 import com.mathias.inventrix.service.PersonService;
@@ -10,10 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -40,4 +38,33 @@ public class AdminController {
         return ResponseEntity.ok(stockService.addLocation(currentUsername,locationRequest));
     }
 
+    @GetMapping("/view-user")
+    public ResponseEntity<?> viewUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String currentUsername = authentication.getName();
+       return ResponseEntity.ok(personService.viewUserDetails(currentUsername));
+    }
+
+    @PutMapping("/edit-user")
+    public ResponseEntity<?> editUser(@RequestBody EditUserRequestDto employeeRequest) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String currentUsername = authentication.getName();
+        return ResponseEntity.ok(personService.editUser(currentUsername,employeeRequest));
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping("/delete-user")
+    public ResponseEntity<?> deleteUser(@RequestParam Long id) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String currentUsername = authentication.getName();
+        return ResponseEntity.ok(personService.deleteUser(currentUsername,id));
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PatchMapping("/make-admin")
+    public ResponseEntity<?> makeAnAdmin(@RequestParam Long id){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String currentUsername = authentication.getName();
+        return ResponseEntity.ok(personService.makeAdmin(currentUsername,id));
+    }
 }

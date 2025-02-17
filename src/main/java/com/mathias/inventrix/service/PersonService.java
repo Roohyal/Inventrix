@@ -1,9 +1,7 @@
 package com.mathias.inventrix.service;
 
 import com.mathias.inventrix.payload.request.*;
-import com.mathias.inventrix.payload.response.EmployeeResponse;
-import com.mathias.inventrix.payload.response.LoginResponse;
-import com.mathias.inventrix.payload.response.PersonRegisterResponse;
+import com.mathias.inventrix.payload.response.*;
 import jakarta.mail.MessagingException;
 
 public interface PersonService {
@@ -16,5 +14,14 @@ public interface PersonService {
     String resetPassword(ResetPasswordRequestDto resetpassword);
 
    EmployeeResponse addEmployee(String email, EmployeeRequest employeeRequest) throws MessagingException;
+
+   PersonDetailsDto viewUserDetails(String email);
+
+   EditUserResponse editUser(String email, EditUserRequestDto editUserRequest);
+
+   String deleteUser(String email, Long id);
+
+   String makeAdmin(String email, Long id);
+
 
 }

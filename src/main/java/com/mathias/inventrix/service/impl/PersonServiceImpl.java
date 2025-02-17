@@ -13,10 +13,7 @@ import com.mathias.inventrix.exceptions.AlreadyExistException;
 import com.mathias.inventrix.exceptions.NotEnabledException;
 import com.mathias.inventrix.exceptions.NotFoundException;
 import com.mathias.inventrix.payload.request.*;
-import com.mathias.inventrix.payload.response.EmployeeResponse;
-import com.mathias.inventrix.payload.response.LoginInfo;
-import com.mathias.inventrix.payload.response.LoginResponse;
-import com.mathias.inventrix.payload.response.PersonRegisterResponse;
+import com.mathias.inventrix.payload.response.*;
 import com.mathias.inventrix.repository.ConfirmationTokenRepository;
 import com.mathias.inventrix.repository.JTokenRepository;
 import com.mathias.inventrix.repository.LocationRepository;
@@ -285,6 +282,61 @@ public class PersonServiceImpl implements PersonService {
                 .responseCode("005")
                 .responseMessage("Your Employee's account has been created successfully, they should kindly check their email")
                 .build();
+    }
+
+    @Override
+    public PersonDetailsDto viewUserDetails(String email) {
+       PersonEntity person =
+               personRepository.findByEmail(email).orElseThrow(()-> new NotFoundException("User is not found"));
+
+        return  PersonDetailsDto.builder()
+                .fullName(person.getFullName())
+                .email(person.getEmail())
+                .phoneNumber(person.getPhoneNumber())
+                .position(person.getPosition())
+                .build();
+    }
+
+    @Override
+    public EditUserResponse editUser(String email, EditUserRequestDto editUserRequest){
+        PersonEntity person =
+                personRepository.findByEmail(email).orElseThrow(()-> new NotFoundException("User is not found"));
+
+        person.setFullName(editUserRequest.getFullName());
+        person.setPhoneNumber(editUserRequest.getPhoneNumber());
+        person.setPosition(editUserRequest.getPosition());
+
+        return EditUserResponse.builder()
+                .responseCode("006")
+                .responseMessage("Your account has been updated successfully")
+                .build();
+    }
+
+    @Override
+    public String deleteUser(String email, Long id) {
+        personRepository.findByEmail(email).orElseThrow(()-> new NotFoundException("User is not found"));
+        personRepository.findById(id).orElseThrow(()-> new NotFoundException("User not found"));
+        return " The User has been deleted successfully";
+    }
+
+    @Override
+    public String makeAdmin(String email, Long id) {
+        personRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Find the user
+        PersonEntity person = personRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Find the ADMIN role
+        PersonEntity adminRole = personRepository.findByRole(Role.ADMIN)
+                .orElseThrow(() -> new RuntimeException("Admin role not found"));
+
+        // Set the user's role to ADMIN
+        person.setRole(Role.ADMIN);
+
+        // Save the updated user
+        personRepository.save(person);
+
+        return "User with name" + person.getFullName()+ " has been made an admin.";
     }
 
     // Generate an 8-character random password
