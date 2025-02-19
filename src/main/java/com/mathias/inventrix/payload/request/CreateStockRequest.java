@@ -1,21 +1,17 @@
-package com.mathias.inventrix.domain.entity;
+package com.mathias.inventrix.payload.request;
 
 import com.mathias.inventrix.domain.enums.Category;
-import jakarta.persistence.*;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
-import java.util.Set;
-
-@Entity
-@Table
 @Getter
 @Setter
-@NoArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
 @Builder
-public class Stocks extends BaseClass {
+public class CreateStockRequest {
 
     @NotBlank(message = "Name of the stock is required")
     private String name;
@@ -32,15 +28,4 @@ public class Stocks extends BaseClass {
     @NotBlank(message = "Category of the stock is required")
     @Enumerated(EnumType.STRING) // If Category is an enum
     private Category category;
-
-    @NotNull(message = "UnitNo cannot be null")
-    private String stkUnitNo;
-
-    @ManyToMany
-    @JoinTable(
-            name = "stock_location",
-            joinColumns = @JoinColumn(name = "stock_id"),
-            inverseJoinColumns = @JoinColumn(name = "location_id")
-    )
-    private Set<Location> locations; // Add this missing field
 }

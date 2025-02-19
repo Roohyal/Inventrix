@@ -33,10 +33,12 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -337,6 +339,25 @@ public class PersonServiceImpl implements PersonService {
         personRepository.save(person);
 
         return "User with name" + person.getFullName()+ " has been made an admin.";
+    }
+
+    @Override
+    public List<EmployeeDetailsDto> viewEmployeeDetails(String email) {
+       PersonEntity person =  personRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Get all users (both admins and employees) under the same company
+       List<PersonEntity> employees = personRepository.findByCompanyId(person.getCompanyId());
+
+        // Convert entities to DTOs using builder pattern
+        return employees.stream()
+                .map(user -> EmployeeDetailsDto.builder()
+                        .fullName(user.getFullName())
+                        .email(user.getEmail())
+                        .phoneNumber(user.getPhoneNumber())
+                        .position(user.getPosition())
+                        .Location(user.getLocation().getLocationName()) // Will be null for admins
+                        .build())
+                .collect(Collectors.toList());
     }
 
     // Generate an 8-character random password

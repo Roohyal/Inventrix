@@ -4,6 +4,8 @@ import com.mathias.inventrix.payload.request.*;
 import com.mathias.inventrix.payload.response.*;
 import jakarta.mail.MessagingException;
 
+import java.util.List;
+
 public interface PersonService {
     PersonRegisterResponse registerPerson(PersonRegisterRequest RegisterRequest) throws MessagingException;
 
@@ -22,6 +24,8 @@ public interface PersonService {
    String deleteUser(String email, Long id);
 
    String makeAdmin(String email, Long id);
+
+  List<EmployeeDetailsDto> viewEmployeeDetails(String email);
 
 
 }

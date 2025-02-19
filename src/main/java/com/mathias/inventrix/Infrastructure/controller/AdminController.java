@@ -3,6 +3,7 @@ package com.mathias.inventrix.Infrastructure.controller;
 import com.mathias.inventrix.payload.request.EditUserRequestDto;
 import com.mathias.inventrix.payload.request.EmployeeRequest;
 import com.mathias.inventrix.payload.request.LocationRequest;
+import com.mathias.inventrix.payload.response.EmployeeDetailsDto;
 import com.mathias.inventrix.service.PersonService;
 import com.mathias.inventrix.service.StockService;
 import jakarta.mail.MessagingException;
@@ -12,6 +13,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -66,5 +69,14 @@ public class AdminController {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String currentUsername = authentication.getName();
         return ResponseEntity.ok(personService.makeAdmin(currentUsername,id));
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/view-employees")
+    public ResponseEntity<?> viewEmployees() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String currentUsername = authentication.getName();
+        List<EmployeeDetailsDto> response = personService.viewEmployeeDetails(currentUsername);
+        return ResponseEntity.ok(response);
     }
 }
