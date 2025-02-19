@@ -6,6 +6,8 @@ import jakarta.persistence.Enumerated;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
+import java.util.Set;
+
 @Getter
 @Setter
 @AllArgsConstructor
@@ -28,4 +30,7 @@ public class CreateStockRequest {
     @NotBlank(message = "Category of the stock is required")
     @Enumerated(EnumType.STRING) // If Category is an enum
     private Category category;
+
+    @NotBlank(message = "Location is Required")
+    private Set<Long> locationId;
 }
