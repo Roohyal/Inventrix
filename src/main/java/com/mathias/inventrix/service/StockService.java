@@ -1,5 +1,6 @@
 package com.mathias.inventrix.service;
 
+import com.mathias.inventrix.domain.enums.Category;
 import com.mathias.inventrix.payload.request.CreateStockRequest;
 import com.mathias.inventrix.payload.request.EditStockRequestDto;
 import com.mathias.inventrix.payload.request.LocationRequest;
@@ -23,5 +24,9 @@ public interface StockService {
     String deleteStock(String email, Long stockId);
 
     EmployeeResponse sellStock(String email, SellStockDto sellStockDto);
+
+    List<StockResponseDto> getStocksByCategory(String email, Category category);
+
+    List<StockResponseDto> getStocksByLocation(String email, Long locationId);
 
 }

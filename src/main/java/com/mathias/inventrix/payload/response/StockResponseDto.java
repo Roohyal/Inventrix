@@ -29,5 +29,7 @@ public class StockResponseDto {
     @Enumerated(EnumType.STRING) // If Category is an enum
     private Category category;
 
-    private String Location;
+    private String location;
+
+    private String stkUnitNo;
 }

@@ -1,5 +1,7 @@
 package com.mathias.inventrix.Infrastructure.controller;
 
+import com.mathias.inventrix.domain.entity.Location;
+import com.mathias.inventrix.domain.enums.Category;
 import com.mathias.inventrix.payload.request.CreateStockRequest;
 import com.mathias.inventrix.payload.request.EditStockRequestDto;
 import com.mathias.inventrix.payload.request.SellStockDto;
@@ -31,6 +33,7 @@ public class StockController {
         return ResponseEntity.ok(response);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/view-stocks")
     public ResponseEntity<?> getStocks(){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -39,6 +42,7 @@ public class StockController {
        return ResponseEntity.ok(response);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/edit-stocks")
     public ResponseEntity<?> editStocks (@RequestParam Long stockId,  @RequestBody EditStockRequestDto editStockRequestDto){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -47,6 +51,7 @@ public class StockController {
         return ResponseEntity.ok(response);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/delete-stocks")
     public ResponseEntity<?> deleteStocks (@RequestParam Long stockId){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -63,4 +68,19 @@ public class StockController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/get-by-category")
+    public ResponseEntity<?> getStocksByCategory(@RequestParam Category category){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String currentUsername = authentication.getName();
+        List<StockResponseDto> response = stockService.getStocksByCategory(currentUsername, category);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/get-by-location")
+    public ResponseEntity<?> getStocksByLocation(@RequestParam Long locationId){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String currentUsername = authentication.getName();
+        List<StockResponseDto> response = stockService.getStocksByLocation(currentUsername, locationId);
+        return ResponseEntity.ok(response);
+    }
 }

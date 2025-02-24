@@ -3,6 +3,7 @@ package com.mathias.inventrix.service.impl;
 import com.mathias.inventrix.domain.entity.Location;
 import com.mathias.inventrix.domain.entity.PersonEntity;
 import com.mathias.inventrix.domain.entity.Stocks;
+import com.mathias.inventrix.domain.enums.Category;
 import com.mathias.inventrix.exceptions.NotFoundException;
 import com.mathias.inventrix.exceptions.StockNotAvailableException;
 import com.mathias.inventrix.payload.request.CreateStockRequest;
@@ -88,12 +89,13 @@ public class StockServiceImpl implements StockService {
 
         // Convert each stock entity to a StockResponseDto and return as a list
         return stocks.stream().map(stock -> StockResponseDto.builder()
+                .stkUnitNo(stock.getStkUnitNo())
                 .name(stock.getName())
                 .price(stock.getPrice())
                 .quantity(stock.getQuantity())
                 .description(stock.getDescription())
                 .category(stock.getCategory())
-                .Location(stock.getLocations() != null && !stock.getLocations().isEmpty()
+                .location(stock.getLocations() != null && !stock.getLocations().isEmpty()
                         ? stock.getLocations().iterator().next().getLocationName() // Assuming Location has getName()
                         : "No location assigned")
                 .build()).collect(Collectors.toList());
@@ -163,5 +165,45 @@ public class StockServiceImpl implements StockService {
                 .responseCode("008")
                 .responseMessage("Successfully sold " + sellStockDto.getQuantitySold() + " units of '" + stock.getName())
                 .build();
+    }
+
+    @Override
+    public List<StockResponseDto> getStocksByCategory(String email, Category category) {
+        // Fetch the logged-in user
+        personRepository.findByEmail(email).orElseThrow(() -> new NotFoundException("User not found"));
+
+        List<Stocks> stocks = stocksRepository.findByCategory(category);
+
+        return stocks.stream().map(stock -> StockResponseDto.builder()
+                .stkUnitNo(stock.getStkUnitNo())
+                .name(stock.getName())
+                .price(stock.getPrice())
+                .quantity(stock.getQuantity())
+                .description(stock.getDescription())
+                .category(stock.getCategory())
+                .location(stock.getLocations().toString())
+                .build()
+        ).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<StockResponseDto> getStocksByLocation(String email, Long locationId) {
+        // Fetch the logged-in user
+        personRepository.findByEmail(email).orElseThrow(() -> new NotFoundException("User not found"));
+
+        Location location = locationRepository.findById(locationId).orElseThrow(() -> new NotFoundException("Location not found"));
+
+        List<Stocks> stocks = stocksRepository.findByLocationsContaining(location);
+
+
+        return stocks.stream().map(stock -> StockResponseDto.builder()
+                .name(stock.getName())
+                .price(stock.getPrice())
+                .quantity(stock.getQuantity())
+                .description(stock.getDescription())
+                .category(stock.getCategory())
+                .location(stock.getLocations().toString())
+                .build()
+        ).collect(Collectors.toList());
     }
 }
