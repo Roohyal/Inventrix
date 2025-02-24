@@ -11,5 +11,6 @@ import lombok.NoArgsConstructor;
 @Builder
 public class EmployeeResponse {
     private String responseCode;
+
     private String responseMessage;
 }

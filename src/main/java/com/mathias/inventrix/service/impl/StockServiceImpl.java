@@ -1,11 +1,17 @@
 package com.mathias.inventrix.service.impl;
 
 import com.mathias.inventrix.domain.entity.Location;
+import com.mathias.inventrix.domain.entity.PersonEntity;
 import com.mathias.inventrix.domain.entity.Stocks;
 import com.mathias.inventrix.exceptions.NotFoundException;
+import com.mathias.inventrix.exceptions.StockNotAvailableException;
 import com.mathias.inventrix.payload.request.CreateStockRequest;
+import com.mathias.inventrix.payload.request.EditStockRequestDto;
 import com.mathias.inventrix.payload.request.LocationRequest;
+import com.mathias.inventrix.payload.request.SellStockDto;
+import com.mathias.inventrix.payload.response.EmployeeResponse;
 import com.mathias.inventrix.payload.response.StockResponse;
+import com.mathias.inventrix.payload.response.StockResponseDto;
 import com.mathias.inventrix.repository.LocationRepository;
 import com.mathias.inventrix.repository.PersonRepository;
 import com.mathias.inventrix.repository.StocksRepository;
@@ -15,7 +21,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -44,7 +52,7 @@ public class StockServiceImpl implements StockService {
     @Override
     public StockResponse createStock(String email, CreateStockRequest createStockRequest) {
 
-        personRepository.findByEmail(email).orElseThrow(()-> new NotFoundException("User not found"));
+       PersonEntity user = personRepository.findByEmail(email).orElseThrow(()-> new NotFoundException("User not found"));
 
         Set<Location> locations = new HashSet<>(locationRepository.findAllById(createStockRequest.getLocationId()));
 
@@ -58,6 +66,7 @@ public class StockServiceImpl implements StockService {
                 .description(createStockRequest.getDescription())
                 .quantity(createStockRequest.getQuantity())
                 .category(createStockRequest.getCategory())
+                .companyId(user.getCompanyId()) // Assign the companyId from the user
                 .stkUnitNo(StockUtil.generateStockUnitNo())
                 .locations(locations)
                 .build();
@@ -66,6 +75,93 @@ public class StockServiceImpl implements StockService {
         return StockResponse.builder()
                 .responseCode("007")
                 .responseMessage(savedStocks.getName() + " has been saved successfully")
+                .build();
+    }
+
+    @Override
+    public List<StockResponseDto> viewAllStock(String email) {
+        // Fetch the logged-in user
+        PersonEntity user = personRepository.findByEmail(email)
+                .orElseThrow(() -> new NotFoundException("User not found"));
+
+       List<Stocks> stocks = stocksRepository.findByCompanyId(user.getCompanyId());
+
+        // Convert each stock entity to a StockResponseDto and return as a list
+        return stocks.stream().map(stock -> StockResponseDto.builder()
+                .name(stock.getName())
+                .price(stock.getPrice())
+                .quantity(stock.getQuantity())
+                .description(stock.getDescription())
+                .category(stock.getCategory())
+                .Location(stock.getLocations() != null && !stock.getLocations().isEmpty()
+                        ? stock.getLocations().iterator().next().getLocationName() // Assuming Location has getName()
+                        : "No location assigned")
+                .build()).collect(Collectors.toList());
+    }
+
+    @Override
+    public EmployeeResponse editStock(String email, Long stockId, EditStockRequestDto editStockRequestDto) {
+        // Fetch the logged-in user
+       personRepository.findByEmail(email).orElseThrow(() -> new NotFoundException("User not found"));
+
+       Stocks stocks = stocksRepository.findById(stockId).orElseThrow(()-> new NotFoundException("Stock not found"));
+
+       stocks.setName(editStockRequestDto.getName());
+       stocks.setPrice(editStockRequestDto.getPrice());
+       stocks.setDescription(editStockRequestDto.getDescription());
+       stocks.setQuantity(editStockRequestDto.getQuantity());
+       stocks.setCategory(editStockRequestDto.getCategory());
+
+       stocksRepository.save(stocks);
+
+        return EmployeeResponse.builder()
+                .responseCode("007")
+                .responseMessage("The Stock has been Updated Successfully")
+                .build();
+    }
+
+    @Override
+    public String deleteStock(String email, Long stockId) {
+        // Fetch the logged-in user
+        personRepository.findByEmail(email).orElseThrow(() -> new NotFoundException("User not found"));
+
+        stocksRepository.deleteById(stockId);
+
+        return " Stock has been deleted successfully";
+    }
+
+    @Override
+    public EmployeeResponse sellStock(String email, SellStockDto sellStockDto) {
+
+        // Fetch the logged-in user
+        personRepository.findByEmail(email).orElseThrow(() -> new NotFoundException("User not found"));
+
+        // Find the stock
+        Stocks stock = stocksRepository.findById(sellStockDto.getStockId())
+                .orElseThrow(() -> new NotFoundException("Stock not found"));
+
+        // Check if the stock exists in the given location
+        boolean isStockInLocation = stock.getLocations().stream()
+                .anyMatch(location -> location.getId().equals(sellStockDto.getLocationId()));
+
+        if (!isStockInLocation) {
+            throw new StockNotAvailableException("Stock '" + stock.getName() + "' is not available in the specified location");
+        }
+
+        // Ensure enough stock is available to sell
+        if (stock.getQuantity() < sellStockDto.getQuantitySold()) {
+            throw new StockNotAvailableException("Insufficient quantity of '" + stock.getName() + "' in stock");
+        }
+
+        // Reduce stock quantity
+        stock.setQuantity(stock.getQuantity() - sellStockDto.getQuantitySold());
+
+        // Save updated stock
+        stocksRepository.save(stock);
+
+        return EmployeeResponse.builder()
+                .responseCode("008")
+                .responseMessage("Successfully sold " + sellStockDto.getQuantitySold() + " units of '" + stock.getName())
                 .build();
     }
 }

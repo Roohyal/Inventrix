@@ -22,4 +22,9 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Object> handleAlreadyExistException(AlreadyExistException e) {
         return new ResponseEntity<>(e.getMessage(), HttpStatus.CONFLICT);
     }
+
+    @ExceptionHandler(StockNotAvailableException.class)
+    public ResponseEntity<Object> handleStockNotAvailableException(StockNotAvailableException e) {
+        return new ResponseEntity<>(e.getMessage(), HttpStatus.CONFLICT);
+    }
 }

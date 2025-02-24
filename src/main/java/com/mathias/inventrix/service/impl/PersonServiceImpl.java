@@ -242,7 +242,7 @@ public class PersonServiceImpl implements PersonService {
 
         // Find the location (mandatory for Employees)
         Location location = locationRepository.findById(employeeRequest.getLocationId())
-                .orElseThrow(() -> new RuntimeException("Location not found"));
+                .orElseThrow(() -> new NotFoundException("Location not found"));
 
         // Generate and encode password
         String rawPassword = generateRandomPassword();
@@ -323,14 +323,14 @@ public class PersonServiceImpl implements PersonService {
 
     @Override
     public String makeAdmin(String email, Long id) {
-        personRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
+        personRepository.findByEmail(email).orElseThrow(() -> new NotFoundException("User not found"));
 
         // Find the user
-        PersonEntity person = personRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
+        PersonEntity person = personRepository.findById(id).orElseThrow(() -> new NotFoundException("User not found"));
 
         // Find the ADMIN role
         PersonEntity adminRole = personRepository.findByRole(Role.ADMIN)
-                .orElseThrow(() -> new RuntimeException("Admin role not found"));
+                .orElseThrow(() -> new NotFoundException("Admin role not found"));
 
         // Set the user's role to ADMIN
         person.setRole(Role.ADMIN);
@@ -343,7 +343,7 @@ public class PersonServiceImpl implements PersonService {
 
     @Override
     public List<EmployeeDetailsDto> viewEmployeeDetails(String email) {
-       PersonEntity person =  personRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
+       PersonEntity person =  personRepository.findByEmail(email).orElseThrow(() -> new NotFoundException("User not found"));
 
         // Get all users (both admins and employees) under the same company
        List<PersonEntity> employees = personRepository.findByCompanyId(person.getCompanyId());

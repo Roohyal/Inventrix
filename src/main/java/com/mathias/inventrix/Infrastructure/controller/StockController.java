@@ -1,17 +1,20 @@
 package com.mathias.inventrix.Infrastructure.controller;
 
 import com.mathias.inventrix.payload.request.CreateStockRequest;
+import com.mathias.inventrix.payload.request.EditStockRequestDto;
+import com.mathias.inventrix.payload.request.SellStockDto;
+import com.mathias.inventrix.payload.response.EmployeeResponse;
 import com.mathias.inventrix.payload.response.StockResponse;
+import com.mathias.inventrix.payload.response.StockResponseDto;
 import com.mathias.inventrix.service.StockService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/stock")
@@ -28,5 +31,36 @@ public class StockController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/view-stocks")
+    public ResponseEntity<?> getStocks(){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String currentUsername = authentication.getName();
+       List<StockResponseDto> response = stockService.viewAllStock(currentUsername);
+       return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/edit-stocks")
+    public ResponseEntity<?> editStocks (@RequestParam Long stockId,  @RequestBody EditStockRequestDto editStockRequestDto){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String currentUsername = authentication.getName();
+        EmployeeResponse response = stockService.editStock(currentUsername, stockId, editStockRequestDto);
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/delete-stocks")
+    public ResponseEntity<?> deleteStocks (@RequestParam Long stockId){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String currentUsername = authentication.getName();
+        String response = stockService.deleteStock(currentUsername, stockId);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/sell-stock")
+    public ResponseEntity<?> sellStock(@RequestBody SellStockDto sellStockDto){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String currentUsername = authentication.getName();
+        EmployeeResponse response = stockService.sellStock(currentUsername, sellStockDto);
+        return ResponseEntity.ok(response);
+    }
 
 }
