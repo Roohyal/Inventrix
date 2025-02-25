@@ -83,4 +83,20 @@ public class StockController {
         List<StockResponseDto> response = stockService.getStocksByLocation(currentUsername, locationId);
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/get-by-name")
+    public ResponseEntity<?> getStocksByName(@RequestParam String name){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String currentUsername = authentication.getName();
+        List<StockResponseDto> response = stockService.getStocksByName(currentUsername, name);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/get-by-stk")
+    public ResponseEntity<?> getStocksByStockId(@RequestParam String stockId){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String currentUsername = authentication.getName();
+        StockResponseDto response = stockService.getStockByStkNo(currentUsername,stockId);
+        return ResponseEntity.ok(response);
+    }
 }

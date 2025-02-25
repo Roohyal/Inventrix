@@ -29,4 +29,8 @@ public interface StockService {
 
     List<StockResponseDto> getStocksByLocation(String email, Long locationId);
 
+    List<StockResponseDto> getStocksByName(String email, String name);
+
+    StockResponseDto getStockByStkNo(String email, String stkNo);
+
 }

@@ -15,4 +15,7 @@ public interface StocksRepository extends JpaRepository<Stocks, Long> {
 
     List<Stocks> findByLocationsContaining(Location location);
 
+    List<Stocks> findByNameContainingIgnoreCase(String name);
+
+    Stocks findByStkUnitNoContainingIgnoreCase(String stkUnitNo);
 }

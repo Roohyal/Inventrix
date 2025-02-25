@@ -206,4 +206,47 @@ public class StockServiceImpl implements StockService {
                 .build()
         ).collect(Collectors.toList());
     }
+
+    @Override
+    public List<StockResponseDto> getStocksByName(String email, String name) {
+        // Fetch the logged-in user
+        personRepository.findByEmail(email).orElseThrow(() -> new NotFoundException("User not found"));
+
+         List<Stocks> stocks = stocksRepository.findByNameContainingIgnoreCase(name);
+
+        if (stocks.isEmpty()) {
+            throw new StockNotAvailableException("No stock found with name: " + name);
+        }
+
+        return stocks.stream()
+                .map(stock -> StockResponseDto.builder()
+                        .name(stock.getName())
+                        .price(stock.getPrice())
+                        .quantity(stock.getQuantity())
+                        .description(stock.getDescription())
+                        .category(stock.getCategory())
+                        .location(stock.getLocations().toString())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public StockResponseDto getStockByStkNo(String email, String stkNo) {
+        // Fetch the logged-in user
+        personRepository.findByEmail(email).orElseThrow(() -> new NotFoundException("User not found"));
+
+       Stocks stock = stocksRepository.findByStkUnitNoContainingIgnoreCase(stkNo);
+
+
+        return StockResponseDto.builder()
+                .name(stock.getName())
+                .price(stock.getPrice())
+                .quantity(stock.getQuantity())
+                .description(stock.getDescription())
+                .category(stock.getCategory())
+                .location(stock.getLocations().toString())
+                .build();
+    }
+
+
 }
