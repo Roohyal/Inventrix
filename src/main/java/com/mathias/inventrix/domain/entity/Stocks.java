@@ -5,7 +5,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
-
+import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -47,4 +47,7 @@ public class Stocks extends BaseClass {
             inverseJoinColumns = @JoinColumn(name = "location_id")
     )
     private Set<Location> locations; // Add this missing field
+
+    @OneToMany(mappedBy = "stock", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<StockSaleHistory> saleHistories;
 }

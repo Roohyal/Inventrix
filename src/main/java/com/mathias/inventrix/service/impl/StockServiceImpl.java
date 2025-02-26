@@ -2,6 +2,7 @@ package com.mathias.inventrix.service.impl;
 
 import com.mathias.inventrix.domain.entity.Location;
 import com.mathias.inventrix.domain.entity.PersonEntity;
+import com.mathias.inventrix.domain.entity.StockSaleHistory;
 import com.mathias.inventrix.domain.entity.Stocks;
 import com.mathias.inventrix.domain.enums.Category;
 import com.mathias.inventrix.exceptions.NotFoundException;
@@ -11,16 +12,19 @@ import com.mathias.inventrix.payload.request.EditStockRequestDto;
 import com.mathias.inventrix.payload.request.LocationRequest;
 import com.mathias.inventrix.payload.request.SellStockDto;
 import com.mathias.inventrix.payload.response.EmployeeResponse;
+import com.mathias.inventrix.payload.response.StockHistoryDto;
 import com.mathias.inventrix.payload.response.StockResponse;
 import com.mathias.inventrix.payload.response.StockResponseDto;
 import com.mathias.inventrix.repository.LocationRepository;
 import com.mathias.inventrix.repository.PersonRepository;
+import com.mathias.inventrix.repository.StockSaleHistoryRepository;
 import com.mathias.inventrix.repository.StocksRepository;
 import com.mathias.inventrix.service.StockService;
 import com.mathias.inventrix.utils.StockUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -35,6 +39,7 @@ public class StockServiceImpl implements StockService {
     private final PersonRepository personRepository;
     private final StocksRepository stocksRepository;
     private final StockUtil stockUtil;
+    private final StockSaleHistoryRepository historyRepository;
 
     @Override
     public String addLocation(String email, LocationRequest locationRequest) {
@@ -136,18 +141,24 @@ public class StockServiceImpl implements StockService {
     public EmployeeResponse sellStock(String email, SellStockDto sellStockDto) {
 
         // Fetch the logged-in user
-        personRepository.findByEmail(email).orElseThrow(() -> new NotFoundException("User not found"));
+       PersonEntity user = personRepository.findByEmail(email).orElseThrow(() -> new NotFoundException("User not found"));
 
         // Find the stock
         Stocks stock = stocksRepository.findById(sellStockDto.getStockId())
                 .orElseThrow(() -> new NotFoundException("Stock not found"));
 
-        // Check if the stock exists in the given location
-        boolean isStockInLocation = stock.getLocations().stream()
-                .anyMatch(location -> location.getId().equals(sellStockDto.getLocationId()));
+        // Ensure the stock belongs to the user's company
+        if (!stock.getCompanyId().equals(user.getCompanyId())) {
+            throw new RuntimeException("You can only sell stocks from your company!");
+        }
 
-        if (!isStockInLocation) {
-            throw new StockNotAvailableException("Stock '" + stock.getName() + "' is not available in the specified location");
+        // Find the location
+        Location location = locationRepository.findById(sellStockDto.getLocationId())
+                .orElseThrow(() -> new RuntimeException("Location not found"));
+
+        // Check if the stock is available in this location
+        if (!stock.getLocations().contains(location)) {
+            throw new RuntimeException("Stock is not available at the selected location");
         }
 
         // Ensure enough stock is available to sell
@@ -160,6 +171,16 @@ public class StockServiceImpl implements StockService {
 
         // Save updated stock
         stocksRepository.save(stock);
+
+        StockSaleHistory saleHistory= StockSaleHistory.builder()
+                .stock(stock)
+                .quantitySold(sellStockDto.getQuantitySold())
+                .location(location)
+                .saleDate(LocalDateTime.now())
+                .companyId(user.getCompanyId())
+                .build();
+
+        historyRepository.save(saleHistory);
 
         return EmployeeResponse.builder()
                 .responseCode("008")
@@ -246,6 +267,24 @@ public class StockServiceImpl implements StockService {
                 .category(stock.getCategory())
                 .location(stock.getLocations().toString())
                 .build();
+    }
+
+    @Override
+    public List<StockHistoryDto> getStockHistory(String email) {
+        // Fetch the logged-in user
+        PersonEntity user = personRepository.findByEmail(email).orElseThrow(() -> new NotFoundException("User not found"));
+
+        List<StockSaleHistory> saleHistories = historyRepository.findByCompanyId(user.getCompanyId());
+
+        return saleHistories.stream().map(history ->
+                StockHistoryDto.builder()
+                        .stockName(history.getStock().getName())
+                        .stkUnitNo(history.getStock().getStkUnitNo())
+                        .locationName(history.getLocation().getLocationName())
+                        .quantitySold(history.getQuantitySold())
+                        .saleDate(history.getSaleDate())
+                        .build()
+        ).collect(Collectors.toList());
     }
 
 

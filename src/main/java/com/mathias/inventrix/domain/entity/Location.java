@@ -28,4 +28,7 @@ public class Location extends BaseClass{
     @OneToMany(mappedBy = "location", cascade = CascadeType.ALL)
     private List<PersonEntity> employees = new ArrayList<>();
 
+    @OneToMany(mappedBy = "location", cascade = CascadeType.ALL)
+    private List<StockSaleHistory> stockSaleHistories = new ArrayList<>();
+
 }

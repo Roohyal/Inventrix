@@ -6,6 +6,7 @@ import com.mathias.inventrix.payload.request.EditStockRequestDto;
 import com.mathias.inventrix.payload.request.LocationRequest;
 import com.mathias.inventrix.payload.request.SellStockDto;
 import com.mathias.inventrix.payload.response.EmployeeResponse;
+import com.mathias.inventrix.payload.response.StockHistoryDto;
 import com.mathias.inventrix.payload.response.StockResponse;
 import com.mathias.inventrix.payload.response.StockResponseDto;
 
@@ -32,5 +33,7 @@ public interface StockService {
     List<StockResponseDto> getStocksByName(String email, String name);
 
     StockResponseDto getStockByStkNo(String email, String stkNo);
+
+    List<StockHistoryDto> getStockHistory(String email);
 
 }
