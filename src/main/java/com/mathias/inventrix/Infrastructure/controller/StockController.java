@@ -10,8 +10,9 @@ import com.mathias.inventrix.payload.response.StockHistoryDto;
 import com.mathias.inventrix.payload.response.StockResponse;
 import com.mathias.inventrix.payload.response.StockResponseDto;
 import com.mathias.inventrix.service.StockService;
+import com.mathias.inventrix.service.impl.PdfReportService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -24,6 +25,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class StockController {
     private final StockService stockService;
+    private final PdfReportService pdfReportService;
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/create-stocks")
@@ -109,5 +111,30 @@ public class StockController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/sales-history")
+    public ResponseEntity<?>getSalesHistory(@RequestParam(required = false) Integer day,
+                                            @RequestParam(required = false) Integer month,
+                                            @RequestParam(required = false) Integer year){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String currentUsername = authentication.getName();
+        List<StockHistoryDto> history = stockService.getSalesHistory(currentUsername,day,month,year);
+        return ResponseEntity.ok(history);
+    }
+
+    @GetMapping("/sales-history-pdf")
+    public ResponseEntity<?> downloadSalesHistoryReport(@RequestParam(required = false) Integer day,
+                                                        @RequestParam(required = false) Integer month,
+                                                        @RequestParam(required = false) Integer year){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String currentUsername = authentication.getName();
+
+        byte[] pdfData = pdfReportService.generateSalesReport(currentUsername, day, month, year);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDisposition(ContentDisposition.attachment().filename("Sales_Report.pdf").build());
+
+        return new ResponseEntity<>(pdfData, headers, HttpStatus.OK);
+    }
 
 }

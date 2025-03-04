@@ -36,4 +36,6 @@ public interface StockService {
 
     List<StockHistoryDto> getStockHistory(String email);
 
+    List<StockHistoryDto> getSalesHistory(String email, Integer day, Integer month, Integer year);
+
 }

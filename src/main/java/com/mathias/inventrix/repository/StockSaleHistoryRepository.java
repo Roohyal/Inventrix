@@ -10,6 +10,7 @@ public interface StockSaleHistoryRepository extends JpaRepository<StockSaleHisto
 
     List<StockSaleHistory> findByCompanyId(String companyId);
 
-    List<StockSaleHistory> findByCompanyIdAndSaleDate(String companyId, LocalDate date);
+    List<StockSaleHistory> findByCompanyIdAndSoldAtBetween(String companyId, LocalDate start, LocalDate end);
+
 
 }

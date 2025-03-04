@@ -25,7 +25,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -286,6 +285,46 @@ public class StockServiceImpl implements StockService {
                         .saleDate(history.getSaleDate())
                         .build()
         ).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<StockHistoryDto> getSalesHistory(String email, Integer day, Integer month, Integer year) {
+        PersonEntity user = personRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        String companyId = user.getCompanyId();
+
+        // Initialize date filters
+        LocalDate start = null;
+        LocalDate end = null;
+
+        if (day != null && month != null && year != null) {
+            // Filter by exact date
+            start = LocalDate.of(year, month, day);
+            end = start;  // Since it's a single day, start and end are the same
+        } else if (month != null && year != null) {
+            // Filter by entire month
+            start = LocalDate.of(year, month, 1);
+            end = start.plusMonths(1).minusDays(1); // Last day of the month
+        } else if (year != null) {
+            // Filter by entire year
+            start = LocalDate.of(year, 1, 1);
+            end = LocalDate.of(year, 12, 31); // Last day of the year
+        } else {
+            throw new IllegalArgumentException("At least a year must be provided for filtering.");
+        }
+
+        // Fetch sales history with the new LocalDate filter
+        List<StockSaleHistory> sales = historyRepository.findByCompanyIdAndSoldAtBetween(companyId, start, end);
+
+        return sales.stream().map(history ->
+              StockHistoryDto.builder()
+                      .stockName(history.getStock().getName())
+                      .locationName(history.getLocation().getLocationName())
+                      .quantitySold(history.getQuantitySold())
+                      .saleDate(history.getSaleDate())
+                      .build()
+                ).collect(Collectors.toList());
     }
 
 
