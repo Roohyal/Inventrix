@@ -6,6 +6,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -20,7 +21,7 @@ public class StockSaleHistory extends BaseClass {
 
     private Long quantitySold; // Quantity sold
 
-    private LocalDateTime saleDate; // Date and time of sale
+    private LocalDate saleDate; // Date and time of sale
 
     private String companyId; // Add this field to link the sale to a company
 

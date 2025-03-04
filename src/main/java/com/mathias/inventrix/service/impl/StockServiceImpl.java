@@ -24,6 +24,7 @@ import com.mathias.inventrix.utils.StockUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
@@ -176,7 +177,7 @@ public class StockServiceImpl implements StockService {
                 .stock(stock)
                 .quantitySold(sellStockDto.getQuantitySold())
                 .location(location)
-                .saleDate(LocalDateTime.now())
+                .saleDate(LocalDate.now())
                 .companyId(user.getCompanyId())
                 .build();
 

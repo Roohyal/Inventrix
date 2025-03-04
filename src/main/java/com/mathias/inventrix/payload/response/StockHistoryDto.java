@@ -2,6 +2,7 @@ package com.mathias.inventrix.payload.response;
 
 import lombok.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 @Getter
 @Setter
@@ -16,7 +17,7 @@ public class StockHistoryDto {
 
     private Long quantitySold;
 
-    private LocalDateTime saleDate;
+    private LocalDate saleDate;
 
     private String locationName;
 }

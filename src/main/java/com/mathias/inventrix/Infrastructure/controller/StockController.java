@@ -6,6 +6,7 @@ import com.mathias.inventrix.payload.request.CreateStockRequest;
 import com.mathias.inventrix.payload.request.EditStockRequestDto;
 import com.mathias.inventrix.payload.request.SellStockDto;
 import com.mathias.inventrix.payload.response.EmployeeResponse;
+import com.mathias.inventrix.payload.response.StockHistoryDto;
 import com.mathias.inventrix.payload.response.StockResponse;
 import com.mathias.inventrix.payload.response.StockResponseDto;
 import com.mathias.inventrix.service.StockService;
@@ -99,4 +100,14 @@ public class StockController {
         StockResponseDto response = stockService.getStockByStkNo(currentUsername,stockId);
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/get-stock-history")
+    public ResponseEntity<?>getStockHistory(){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String currentUsername = authentication.getName();
+        List<StockHistoryDto> response = stockService.getStockHistory(currentUsername);
+        return ResponseEntity.ok(response);
+    }
+
+
 }
