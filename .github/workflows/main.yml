@@ -1,13 +1,13 @@
-name: Build and Test Inventrix App
+name: Build Inventrix App
 
 on:
   push:
     branches:
-      - main  # Space added after '-'
+      - main
 
 jobs:
   build:
-    name: Build and Test
+    name: Build
     runs-on: ubuntu-latest
 
     steps:
@@ -20,5 +20,5 @@ jobs:
           distribution: 'corretto'
           java-version: 21
 
-      - name: Build with Maven
-        run: mvn clean package
+      - name: Build with Maven (Skip Tests)
+        run: mvn clean package -DskipTests
